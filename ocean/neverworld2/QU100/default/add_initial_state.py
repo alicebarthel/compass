@@ -117,18 +117,18 @@ def main():
     # this is for structured grid: nj, ni = 140, 80
     # Simple "Atlantic" box with re-entrant Drake passage
     T = topo_builder.topo(lonCell*rad2deg, latCell*rad2deg, D0)
-    T.add_NS_coast(NW2_lonW, -40, 90, cw, cd)
-    T.add_NS_coast(NW2_lonE, -40, 90, cw, cd)
-    T.add_NS_coast(NW2_lonW, -90, -60, cw, cd)
-    T.add_NS_coast(NW2_lonE, -90, -60, cw, cd)
+    T.add_NS_coast(NW2_lonW, -20, 90, cw, cd)
+    T.add_NS_coast(NW2_lonE, -20, 90, cw, cd)
+    T.add_NS_coast(NW2_lonW, -90, -50, cw, cd)
+    T.add_NS_coast(NW2_lonE, -90, -50, cw, cd)
     T.add_EW_coast(-360, 360, NW2_latS, cw, cd)
     T.add_EW_coast(-360, 360, NW2_latN, cw, cd)
-    T.add_circular_ridge(NW2_lonW, -50, 10, 2, drake) # Drake sill
+    T.add_circular_ridge(NW2_lonW, -35, 10, 2, drake) # Drake sill
     T.add_NS_ridge(30, -90, 90, 30, D0/2) # Mid-Atlantic ridge
-    T.add_EW_coast(NW2_lonE, 360, -60, cw, cd)
-    T.add_EW_coast(-360, NW2_lonW, -60, cw, cd)
-    T.add_EW_coast(NW2_lonE, 360, -40, cw, cd)
-    T.add_EW_coast(-360, NW2_lonW, -40, cw, cd)
+    T.add_EW_coast(NW2_lonE, 360, -50, cw, cd)
+    T.add_EW_coast(-360, NW2_lonW, -50, cw, cd)
+    T.add_EW_coast(NW2_lonE, 360, -20, cw, cd)
+    T.add_EW_coast(-360, NW2_lonW, -20, cw, cd)
     bottomDepthObserved[:] = -T.z[:]
     print('Depth range: ', min(bottomDepthObserved), max(bottomDepthObserved))
     # Compute maxLevelCell and layerThickness for z-level (variation only on top)
