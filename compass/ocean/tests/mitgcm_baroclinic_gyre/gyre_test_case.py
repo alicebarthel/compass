@@ -33,3 +33,10 @@ class GyreTestCase(TestCase):
         self.add_step(QuasiUniformSphericalMeshStep(
             test_case=self, cell_width=int(resolution[:-2])))
         self.add_step(CullMesh(test_case=self))
+
+    def configure(self):
+        """
+        Set config options for the test case
+        """
+        config = self.config
+        config.add_from_package('compass.mesh', 'mesh.cfg')
