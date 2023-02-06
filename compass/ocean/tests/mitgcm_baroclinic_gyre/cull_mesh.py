@@ -47,10 +47,11 @@ class CullMesh(Step):
         lat_min = section.getfloat('lat_min')
         lat_max = section.getfloat('lat_max')
 
-        mask = numpy.logical_and(
-            numpy.logical_and(lon >= lon_min, lon <= lon_max),
-            numpy.logical_and(lat >= lat_min, lat <= lat_max))
+        mask = np.logical_and(
+            np.logical_and(lon >= lon_min, lon <= lon_max),
+            np.logical_and(lat >= lat_min, lat <= lat_max))
 
+        n_cells = ds_mesh.sizes['nCells']
         ds_mask['regionCellMasks'] = (('nCells', 'nRegions'),
                                       mask.astype(int).reshape(n_cells, 1))
 
