@@ -27,6 +27,13 @@ def generate_1d_grid(config):
     if grid_type == 'uniform':
         vert_levels = section.getint('vert_levels')
         interfaces = _generate_uniform(vert_levels)
+    elif grid_type == 'linear_dz':
+        vert_levels = section.getint('vert_levels')
+        min_layer_thickness = section.getfloat('min_layer_thickness')
+        max_layer_thickness = section.getfloat('max_layer_thickness')
+        interfaces = _create_linear_dz_grid(vert_levels,
+                                            min_layer_thickness,
+                                            max_layer_thickness)
     elif grid_type == 'tanh_dz':
         vert_levels = section.getint('vert_levels')
         min_layer_thickness = section.getfloat('min_layer_thickness')
@@ -132,6 +139,38 @@ def _read_json(grid_type):
     with resources.open_text("compass.ocean.vertical", filename) as data_file:
         data = json.load(data_file)
         interfaces = numpy.array(data)
+
+    return interfaces
+
+
+def _create_linear_dz_grid(num_vert_levels, min_layer_thickness,
+                           max_layer_thickness):
+    """
+    Creates the linear vertical grid for MPAS-Ocean and writes it to a NetCDF file
+
+    Parameters
+    ----------
+    num_vert_levels : int
+        Number of vertical levels for the grid
+
+    min_layer_thickness : float
+        Target thickness of the first layer [m]
+
+    max_layer_thickness : float
+        Target maximum thickness in column [m]
+
+    Returns
+    -------
+    interfaces : numpy.ndarray
+        A 1D array of positive depths for layer interfaces in meters
+    """
+
+    nz = num_vert_levels
+    dz1 = min_layer_thickness
+    dz2 = max_layer_thickness
+
+    dz = numpy.linspace(dz1, dz2, nz)
+    interfaces = - np.append([0], np.cumsum(dz))
 
     return interfaces
 
