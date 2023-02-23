@@ -29,11 +29,11 @@ def generate_1d_grid(config):
         interfaces = _generate_uniform(vert_levels)
     elif grid_type == 'linear_dz':
         vert_levels = section.getint('vert_levels')
-        min_layer_thickness = section.getfloat('min_layer_thickness')
-        max_layer_thickness = section.getfloat('max_layer_thickness')
+        bottom_depth = section.getfloat('bottom_depth')
+        linear_dz_rate = section.getfloat('linear_dz_rate')
         interfaces = _create_linear_dz_grid(vert_levels,
-                                            min_layer_thickness,
-                                            max_layer_thickness)
+                                            bottom_depth,
+                                            linear_dz_rate)
     elif grid_type == 'tanh_dz':
         vert_levels = section.getint('vert_levels')
         min_layer_thickness = section.getfloat('min_layer_thickness')
@@ -143,8 +143,8 @@ def _read_json(grid_type):
     return interfaces
 
 
-def _create_linear_dz_grid(num_vert_levels, min_layer_thickness,
-                           max_layer_thickness):
+def _create_linear_dz_grid(num_vert_levels, bottom_depth,
+                           linear_dz_rate):
     """
     Creates the linear vertical grid for MPAS-Ocean and writes it to a NetCDF file
 
@@ -153,11 +153,11 @@ def _create_linear_dz_grid(num_vert_levels, min_layer_thickness,
     num_vert_levels : int
         Number of vertical levels for the grid
 
-    min_layer_thickness : float
-        Target thickness of the first layer [m]
+    bottom_depth : float
+        bottom depth for the chosen vertical coordinate [m]
 
-    max_layer_thickness : float
-        Target maximum thickness in column [m]
+    linear_dz_rate : float
+        rate of layer thickness increase (for linear_dz) [m]
 
     Returns
     -------
@@ -166,11 +166,10 @@ def _create_linear_dz_grid(num_vert_levels, min_layer_thickness,
     """
 
     nz = num_vert_levels
-    dz1 = min_layer_thickness
-    dz2 = max_layer_thickness
 
-    dz = numpy.linspace(dz1, dz2, nz)
-    interfaces = - np.append([0], np.cumsum(dz))
+    layerThickness = [(bottom_depth / nz) - (np.floor(nz/2) - k) * linear_dz_rate for k in np.arange(0, nz)]
+
+    interfaces = - np.append([0], np.cumsum(layerThickness))
 
     return interfaces
 
