@@ -49,81 +49,81 @@ class InitialState(Step):
 
         _write_forcing(config, ds.latCell)
 
+def _write_initial_state(config, dsMesh):
+    section = config['mitgcm_baroclinic_gyre']
 
-    def _write_initial_state(config, dsMesh):
-        section = config['mitgcm_baroclinic_gyre']
+    ds = dsMesh.copy()
 
-        ds = dsMesh.copy()
+    bottom_depth = config.getfloat('vertical_grid', 'bottom_depth')
+    ds['bottomDepth'] = bottom_depth * xr.ones_like(ds.xCell)
+    ds['ssh'] = xr.zeros_like(ds.xCell)
 
-        bottom_depth = config.getfloat('vertical_grid', 'bottom_depth')
-        ds['bottomDepth'] = bottom_depth * xr.ones_like(ds.nCells)
-        ds['ssh'] = xr.zeros_like(ds.nCells)
+    init_vertical_coord(config, ds)
 
-        init_vertical_coord(config, ds)
+    # setting the initial conditions 
+    temperature = (-11. * np.log(0.0414*
+                 (ds.zMid + 100.3)) + 48.8)
+    temperature = temperature.transpose('Time', 'nCells', 'nVertLevels')
+    print(f'bottom T: {temperature[0, 200, -1]} and surface : {temperature[0, 200, 0]}')
+    salinity = 34.0 * xr.ones_like(temperature)
 
-        # setting the initial conditions 
-        temperature = (-11. * np.log(0.0414*
-                     (ds.zMid + 100.3)) + 48.8)
-        print(f'bottom T: {temperature[-1]} and surface : {temperature[0]}')
-        temperature = temperature.transpose('Time', 'nCells', 'nVertLevels')
-        salinity = 34.0 * xr.ones_like(temperature)
+    normalVelocity = xr.zeros_like(ds.xEdge)
+    normalVelocity, _ = xr.broadcast(normalVelocity, ds.refBottomDepth)
+    normalVelocity = normalVelocity.transpose('nEdges', 'nVertLevels')
+    normalVelocity = normalVelocity.expand_dims(dim='Time', axis=0)
 
-        normalVelocity = xr.zeros_like(ds.xEdge)
-        normalVelocity, _ = xr.broadcast(normalVelocity, ds.refBottomDepth)
-        normalVelocity = normalVelocity.transpose('nEdges', 'nVertLevels')
-        normalVelocity = normalVelocity.expand_dims(dim='Time', axis=0)
+    ds['temperature'] = temperature
+    ds['salinity'] = salinity 
+    ds['normalVelocity'] = normalVelocity
 
-        ds['temperature'] = temperature
-        ds['salinity'] = salinity 
-        ds['normalVelocity'] = normalVelocity
+    omega = 2. * np.pi / 86164.   
+    ds['fCell'] = 2. * omega * np.sin(ds.latCell)
+    ds['fEdge'] = 2. * omega * np.sin(ds.latEdge) 
+    ds['fVertex'] =  2. * omega * np.sin(ds.latVertex)
 
-        omega = 2. * np.pi / 86164.   
-        ds['fCell'] = 2. * omega * np.sin(ds.latCell)
-        ds['fEdge'] = 2. * omega * np.sin(ds.latEdge) 
-        ds['fVertex'] =  2. * omega * np.sin(ds.latVertex)
+    write_netcdf(ds, 'initial_state.nc')
+    return ds
 
-        write_netcdf(ds, 'initial_state.nc')
-        return ds
+def _write_forcing(config, lat):
+    section = config['mitgcm_baroclinic_gyre']
+    latMin = section.getfloat('lat_min')
+    latMax = section.getfloat('lat_max')
+    tauMax = section.getfloat('wind_stress_max')
+    tempMin = section.getfloat('temp_min')
+    tempMax = section.getfloat('temp_max')
+    restoring_temp_piston_vel = section.getfloat('restoring_temp_piston_vel')
+    lat = np.rad2deg(lat)
+    # set wind stress
+    windStressZonal = -tauMax * np.cos(2 * np.pi * (lat - latMin) \
+                      / (latMax - latMin))
 
-    def _write_forcing(config, lat):
-        section = config['mitgcm_baroclinic_gyre']
-        latMin = section.getfloat('lat_min')
-        latMax = section.getfloat('lat_max')
-        tauMax = section.getfloat('wind_stress_max')
-        tempMin = section.getfloat('temp_min')
-        tempMax = section.getfloat('temp_max')
-        restoring_temp_piston_vel = section.getfloat('restoring_temp_piston_vel')
-        # set wind stress
-        windStressZonal = -tauMax * np.cos(2 * np.pi * (lat - latMin) \
-                          / (latMax - latMin))
-    
-        windStressZonal = windStressZonal.expand_dims(dim='Time', axis=0)
-    
-        windStressMeridional = xr.zeros_like(windStressZonal)
-    
-        # surface restoring
-        temperatureSurfaceRestoringValue = \
-            (tempMax - tempMin) * (latMax - lat) / (latMax - latMin) + tempMin
-        temperatureSurfaceRestoringValue = \
-            temperatureSurfaceRestoringValue.expand_dims(dim='Time', axis=0)
-    
-        temperaturePistonVelocity = \
-            restoring_temp_piston_vel * xr.ones_like(
-                temperatureSurfaceRestoringValue)
-    
-        salinitySurfaceRestoringValue = \
-            34.0 * xr.ones_like(temperatureSurfaceRestoringValue)
-        salinityPistonVelocity = xr.zeros_like(temperaturePistonVelocity)
-    
-    
-        dsForcing = xr.Dataset()
-        dsForcing['windStressZonal'] = windStressZonal
-        dsForcing['windStressMeridional'] = windStressMeridional
-        dsForcing['temperaturePistonVelocity'] = temperaturePistonVelocity
-        dsForcing['salinityPistonVelocity'] = salinityPistonVelocity
-        dsForcing['temperatureSurfaceRestoringValue'] = \
-            temperatureSurfaceRestoringValue
-        dsForcing['salinitySurfaceRestoringValue'] = salinitySurfaceRestoringValue
-    
-        write_netcdf(dsForcing, 'forcing.nc')
+    windStressZonal = windStressZonal.expand_dims(dim='Time', axis=0)
+
+    windStressMeridional = xr.zeros_like(windStressZonal)
+
+    # surface restoring
+    temperatureSurfaceRestoringValue = \
+        (tempMax - tempMin) * (latMax - lat) / (latMax - latMin) + tempMin
+    temperatureSurfaceRestoringValue = \
+        temperatureSurfaceRestoringValue.expand_dims(dim='Time', axis=0)
+
+    temperaturePistonVelocity = \
+        restoring_temp_piston_vel * xr.ones_like(
+            temperatureSurfaceRestoringValue)
+
+    salinitySurfaceRestoringValue = \
+        34.0 * xr.ones_like(temperatureSurfaceRestoringValue)
+    salinityPistonVelocity = xr.zeros_like(temperaturePistonVelocity)
+
+
+    dsForcing = xr.Dataset()
+    dsForcing['windStressZonal'] = windStressZonal
+    dsForcing['windStressMeridional'] = windStressMeridional
+    dsForcing['temperaturePistonVelocity'] = temperaturePistonVelocity
+    dsForcing['salinityPistonVelocity'] = salinityPistonVelocity
+    dsForcing['temperatureSurfaceRestoringValue'] = \
+        temperatureSurfaceRestoringValue
+    dsForcing['salinitySurfaceRestoringValue'] = salinitySurfaceRestoringValue
+
+    write_netcdf(dsForcing, 'forcing.nc')
 

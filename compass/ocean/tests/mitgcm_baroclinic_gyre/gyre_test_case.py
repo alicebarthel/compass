@@ -1,4 +1,5 @@
 from compass.testcase import TestCase
+from compass.ocean.tests.mitgcm_baroclinic_gyre.initial_state import InitialState
 from compass.mesh import QuasiUniformSphericalMeshStep
 from compass.ocean.tests.mitgcm_baroclinic_gyre.cull_mesh import CullMesh
 
@@ -33,6 +34,8 @@ class GyreTestCase(TestCase):
         self.add_step(QuasiUniformSphericalMeshStep(
             test_case=self, cell_width=int(resolution[:-2])))
         self.add_step(CullMesh(test_case=self))
+        self.add_step(
+            InitialState(test_case=self, resolution=resolution))
 
     def configure(self):
         """
