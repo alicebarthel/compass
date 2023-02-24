@@ -1,9 +1,7 @@
-import xarray
-import numpy
+import xarray as xr
+import numpy as np
 
-from mpas_tools.planar_hex import make_planar_hex_mesh
 from mpas_tools.io import write_netcdf
-from mpas_tools.mesh.conversion import convert, cull
 
 from compass.ocean.vertical import init_vertical_coord
 from compass.step import Step
@@ -11,7 +9,7 @@ from compass.step import Step
 
 class InitialState(Step):
     """
-    A step for creating a mesh and initial condition for baroclinic channel
+    A step for creating the initial condition for MITgcm baroclinic gyre
     test cases
 
     Attributes
@@ -33,6 +31,9 @@ class InitialState(Step):
         """
         super().__init__(test_case=test_case, name='initial_state')
         self.resolution = resolution
+        self.add_input_file(
+            filename='culled_mesh.nc',
+            target='../cull_mesh/culled_mesh.nc')
 
         self.add_output_file('initial_state.nc')
 
@@ -41,101 +42,88 @@ class InitialState(Step):
         Run this step of the test case
         """
         config = self.config
-        logger = self.logger
 
-        section = config['baroclinic_channel']
-        nx = section.getint('nx')
-        ny = section.getint('ny')
-        dc = section.getfloat('dc')
+        dsMesh = xr.open_dataset('culled_mesh.nc')
 
-        dsMesh = make_planar_hex_mesh(nx=nx, ny=ny, dc=dc, nonperiodic_x=False,
-                                      nonperiodic_y=True)
-        write_netcdf(dsMesh, 'base_mesh.nc')
+        ds = _write_initial_state(config, dsMesh)
 
-        dsMesh = cull(dsMesh, logger=logger)
-        dsMesh = convert(dsMesh, graphInfoFileName='culled_graph.info',
-                         logger=logger)
-        write_netcdf(dsMesh, 'culled_mesh.nc')
+        _write_forcing(config, ds.latCell)
 
-        section = config['baroclinic_channel']
-        use_distances = section.getboolean('use_distances')
-        gradient_width_dist = section.getfloat('gradient_width_dist')
-        gradient_width_frac = section.getfloat('gradient_width_frac')
-        bottom_temperature = section.getfloat('bottom_temperature')
-        surface_temperature = section.getfloat('surface_temperature')
-        temperature_difference = section.getfloat('temperature_difference')
-        salinity = section.getfloat('salinity')
-        coriolis_parameter = section.getfloat('coriolis_parameter')
+
+    def _write_initial_state(config, dsMesh):
+        section = config['mitgcm_baroclinic_gyre']
 
         ds = dsMesh.copy()
-        xCell = ds.xCell
-        yCell = ds.yCell
 
         bottom_depth = config.getfloat('vertical_grid', 'bottom_depth')
-
-        ds['bottomDepth'] = bottom_depth * xarray.ones_like(xCell)
-        ds['ssh'] = xarray.zeros_like(xCell)
+        ds['bottomDepth'] = bottom_depth * xr.ones_like(ds.nCells)
+        ds['ssh'] = xr.zeros_like(ds.nCells)
 
         init_vertical_coord(config, ds)
 
-        xMin = xCell.min().values
-        xMax = xCell.max().values
-        yMin = yCell.min().values
-        yMax = yCell.max().values
+        # setting the initial conditions 
+        temperature = (-11. * np.log(0.0414*
+                     (ds.zMid + 100.3)) + 48.8)
+        print(f'bottom T: {temperature[-1]} and surface : {temperature[0]}')
+        temperature = temperature.transpose('Time', 'nCells', 'nVertLevels')
+        salinity = 34.0 * xr.ones_like(temperature)
 
-        yMid = 0.5*(yMin + yMax)
-        xPerturbMin = xMin + 4.0 * (xMax - xMin) / 6.0
-        xPerturbMax = xMin + 5.0 * (xMax - xMin) / 6.0
-
-        if use_distances:
-            perturbationWidth = gradient_width_dist
-        else:
-            perturbationWidth = (yMax - yMin) * gradient_width_frac
-
-        yOffset = perturbationWidth * numpy.sin(
-            6.0 * numpy.pi * (xCell - xMin) / (xMax - xMin))
-
-        temp_vert = (bottom_temperature +
-                     (surface_temperature - bottom_temperature) *
-                     ((ds.refZMid + bottom_depth) / bottom_depth))
-
-        frac = xarray.where(yCell < yMid - yOffset, 1., 0.)
-
-        mask = numpy.logical_and(yCell >= yMid - yOffset,
-                                 yCell < yMid - yOffset + perturbationWidth)
-        frac = xarray.where(mask,
-                            1. - (yCell - (yMid - yOffset)) / perturbationWidth,
-                            frac)
-
-        temperature = temp_vert - temperature_difference * frac
-        temperature = temperature.transpose('nCells', 'nVertLevels')
-
-        # Determine yOffset for 3rd crest in sin wave
-        yOffset = 0.5 * perturbationWidth * numpy.sin(
-            numpy.pi * (xCell - xPerturbMin) / (xPerturbMax - xPerturbMin))
-
-        mask = numpy.logical_and(
-            numpy.logical_and(yCell >= yMid - yOffset - 0.5 * perturbationWidth,
-                              yCell <= yMid - yOffset + 0.5 * perturbationWidth),
-            numpy.logical_and(xCell >= xPerturbMin,
-                              xCell <= xPerturbMax))
-
-        temperature = (temperature +
-                       mask * 0.3 * (1. - ((yCell - (yMid - yOffset)) /
-                                           (0.5 * perturbationWidth))))
-
-        temperature = temperature.expand_dims(dim='Time', axis=0)
-
-        normalVelocity = xarray.zeros_like(ds.xEdge)
-        normalVelocity, _ = xarray.broadcast(normalVelocity, ds.refBottomDepth)
+        normalVelocity = xr.zeros_like(ds.xEdge)
+        normalVelocity, _ = xr.broadcast(normalVelocity, ds.refBottomDepth)
         normalVelocity = normalVelocity.transpose('nEdges', 'nVertLevels')
         normalVelocity = normalVelocity.expand_dims(dim='Time', axis=0)
 
         ds['temperature'] = temperature
-        ds['salinity'] = salinity * xarray.ones_like(temperature)
+        ds['salinity'] = salinity 
         ds['normalVelocity'] = normalVelocity
-        ds['fCell'] = coriolis_parameter * xarray.ones_like(xCell)
-        ds['fEdge'] = coriolis_parameter * xarray.ones_like(ds.xEdge)
-        ds['fVertex'] = coriolis_parameter * xarray.ones_like(ds.xVertex)
 
-        write_netcdf(ds, 'ocean.nc')
+        omega = 2. * np.pi / 86164.   
+        ds['fCell'] = 2. * omega * np.sin(ds.latCell)
+        ds['fEdge'] = 2. * omega * np.sin(ds.latEdge) 
+        ds['fVertex'] =  2. * omega * np.sin(ds.latVertex)
+
+        write_netcdf(ds, 'initial_state.nc')
+        return ds
+
+    def _write_forcing(config, lat):
+        section = config['mitgcm_baroclinic_gyre']
+        latMin = section.getfloat('lat_min')
+        latMax = section.getfloat('lat_max')
+        tauMax = section.getfloat('wind_stress_max')
+        tempMin = section.getfloat('temp_min')
+        tempMax = section.getfloat('temp_max')
+        restoring_temp_piston_vel = section.getfloat('restoring_temp_piston_vel')
+        # set wind stress
+        windStressZonal = -tauMax * np.cos(2 * np.pi * (lat - latMin) \
+                          / (latMax - latMin))
+    
+        windStressZonal = windStressZonal.expand_dims(dim='Time', axis=0)
+    
+        windStressMeridional = xr.zeros_like(windStressZonal)
+    
+        # surface restoring
+        temperatureSurfaceRestoringValue = \
+            (tempMax - tempMin) * (latMax - lat) / (latMax - latMin) + tempMin
+        temperatureSurfaceRestoringValue = \
+            temperatureSurfaceRestoringValue.expand_dims(dim='Time', axis=0)
+    
+        temperaturePistonVelocity = \
+            restoring_temp_piston_vel * xr.ones_like(
+                temperatureSurfaceRestoringValue)
+    
+        salinitySurfaceRestoringValue = \
+            34.0 * xr.ones_like(temperatureSurfaceRestoringValue)
+        salinityPistonVelocity = xr.zeros_like(temperaturePistonVelocity)
+    
+    
+        dsForcing = xr.Dataset()
+        dsForcing['windStressZonal'] = windStressZonal
+        dsForcing['windStressMeridional'] = windStressMeridional
+        dsForcing['temperaturePistonVelocity'] = temperaturePistonVelocity
+        dsForcing['salinityPistonVelocity'] = salinityPistonVelocity
+        dsForcing['temperatureSurfaceRestoringValue'] = \
+            temperatureSurfaceRestoringValue
+        dsForcing['salinitySurfaceRestoringValue'] = salinitySurfaceRestoringValue
+    
+        write_netcdf(dsForcing, 'forcing.nc')
+
