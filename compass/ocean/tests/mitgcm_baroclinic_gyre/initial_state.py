@@ -34,6 +34,9 @@ class InitialState(Step):
         self.add_input_file(
             filename='culled_mesh.nc',
             target='../cull_mesh/culled_mesh.nc')
+        self.add_input_file(
+            filename='culled_graph.info',
+            target='../cull_mesh/culled_graph.info')
 
         self.add_output_file('initial_state.nc')
 
@@ -62,7 +65,7 @@ def _write_initial_state(config, dsMesh):
 
     # setting the initial conditions 
     temperature = (-11. * np.log(0.0414*
-                 (ds.zMid + 100.3)) + 48.8)
+                 (-1.*ds.zMid + 100.3)) + 48.8)
     temperature = temperature.transpose('Time', 'nCells', 'nVertLevels')
     print(f'bottom T: {temperature[0, 200, -1]} and surface : {temperature[0, 200, 0]}')
     salinity = 34.0 * xr.ones_like(temperature)
