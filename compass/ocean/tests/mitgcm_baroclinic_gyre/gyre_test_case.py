@@ -1,5 +1,6 @@
 from compass.testcase import TestCase
 from compass.ocean.tests.mitgcm_baroclinic_gyre.initial_state import InitialState
+from compass.ocean.tests.mitgcm_baroclinic_gyre.forward import Forward
 from compass.mesh import QuasiUniformSphericalMeshStep
 from compass.ocean.tests.mitgcm_baroclinic_gyre.cull_mesh import CullMesh
 
@@ -13,7 +14,7 @@ class GyreTestCase(TestCase):
         The resolution of the test case
     """
 
-    def __init__(self, test_group, resolution):
+    def __init__(self, test_group, resolution, long):
         """
         Create the test case
 
@@ -24,9 +25,17 @@ class GyreTestCase(TestCase):
 
         resolution : str
             The resolution of the test case
+
+        long : bool
+            Whether to run a long (3-year) simulation to quasi-equilibrium
         """
         name = 'performance'
         self.resolution = resolution
+        self.long = long
+
+        if long:
+            name = 'long'
+
         subdir = f'{resolution}/{name}'
         super().__init__(test_group=test_group, name=name,
                          subdir=subdir)
@@ -36,6 +45,9 @@ class GyreTestCase(TestCase):
         self.add_step(CullMesh(test_case=self))
         self.add_step(
             InitialState(test_case=self, resolution=resolution))
+        self.add_step(
+            Forward(test_case=self, resolution=resolution,
+                    long=long))
 
     def configure(self):
         """

@@ -15,6 +15,6 @@ class MitgcmBaroclinicGyre(TestGroup):
 
         for resolution in ['80km']:
             self.add_test_case(
-                GyreTestCase(test_group=self, resolution=resolution))
+                GyreTestCase(test_group=self, resolution=resolution, long=False))
 
 
