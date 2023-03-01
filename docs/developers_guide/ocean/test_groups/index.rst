@@ -18,6 +18,7 @@ Test groups
    internal_wave
    isomip_plus
    merry_go_round
+   mitgcm_baroclinic_gyre
    nonhydro
    overflow
    planar_convergence
