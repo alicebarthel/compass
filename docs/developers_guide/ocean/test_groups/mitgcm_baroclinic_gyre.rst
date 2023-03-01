@@ -34,8 +34,6 @@ The sinusoidal wind-stress variations are defined according to
 
 where :math:`L_{\varphi}` is the lateral domain extent
 (:math:`60^{\circ}`), :math:`\varphi_o` is set to :math:`15^{\circ} \text{N}` and :math:`\tau_0` is :math:`0.1 \text{ N m}^{-2}`.
-:numref:`baroclinic_gyre_config` summarizes the
-configuration simulated. 
 
 Temperature is restored in the surface layer to a linear profile:
 
@@ -51,7 +49,7 @@ Initial state
 
 Initially the fluid is stratified
 with a reference potential temperature profile that varies from (approximately) :math:`\theta=30.7 \text{ } ^{\circ}`\ C
-in the surface layer to :math:`\theta=1.3 \text{ } ^{\circ}`\ C in the bottom layer. The temperature values are from fitting an analytical function to the MITgcm disrete values (originally ranging form 2 to 30 `\text{ } ^{\circ}`\ C. 
+in the surface layer to :math:`\theta=1.3 \text{ } ^{\circ}`\ C in the bottom layer. The temperature values are from fitting an analytical function to the MITgcm disrete values (originally ranging from 2 to 30 `^{\circ}`\ C. 
 The equation of state used in this experiment is linear:
 
 .. math::
@@ -66,7 +64,7 @@ temperature, :math:`\theta`. For consistency with later examples, in
 which the equation of state is non-linear, here we use the variable :math:`\theta` to
 represent temperature.
 
-  .. figure:: figs/baroclinic_gyre_config.png
+  .. figure:: ../images/baroclinic_gyre_config.png
            :width: 95%
       :align: center
       :alt: baroclinic gyre configuration
