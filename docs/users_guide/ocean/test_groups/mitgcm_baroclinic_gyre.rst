@@ -66,13 +66,13 @@ temperature, :math:`\theta`. For consistency with later examples, in
 which the equation of state is non-linear, here we use the variable :math:`\theta` to
 represent temperature.
 
-  .. figure:: figs/baroclinic_gyre_config.png
-           :width: 95%
-      :align: center
-      :alt: baroclinic gyre configuration
-      :name: baroclinic_gyre_config
+.. figure:: ../images/baroclinic_gyre_config.png
+  :width: 95%
+  :align: center
+  :alt: baroclinic gyre configuration
+  :name: baroclinic_gyre_config
 
-      Schematic of simulation domain and wind-stress forcing function for baroclinic gyre numerical experiment. The domain is enclosed by solid walls. From `MITgcm test case <https://mitgcm.readthedocs.io/en/latest/examples/baroclinic_gyre/baroclinic_gyre.html>`_.
+  Schematic of simulation domain and wind-stress forcing function for baroclinic gyre numerical experiment. The domain is enclosed by solid walls. From `MITgcm test case <https://mitgcm.readthedocs.io/en/latest/examples/baroclinic_gyre/baroclinic_gyre.html>`_.
 
 Validation
 --------------

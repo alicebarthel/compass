@@ -1,8 +1,11 @@
-from compass.testcase import TestCase
-from compass.ocean.tests.mitgcm_baroclinic_gyre.initial_state import InitialState
-from compass.ocean.tests.mitgcm_baroclinic_gyre.forward import Forward
 from compass.mesh import QuasiUniformSphericalMeshStep
 from compass.ocean.tests.mitgcm_baroclinic_gyre.cull_mesh import CullMesh
+from compass.ocean.tests.mitgcm_baroclinic_gyre.forward import Forward
+from compass.ocean.tests.mitgcm_baroclinic_gyre.initial_state import (
+    InitialState,
+)
+from compass.testcase import TestCase
+
 
 class GyreTestCase(TestCase):
     """
@@ -20,7 +23,8 @@ class GyreTestCase(TestCase):
 
         Parameters
         ----------
-        test_group : compass.ocean.tests.mitgcm_baroclinic_gyre.MitgcmBaroclinicGyre
+        test_group :
+        compass.ocean.tests.mitgcm_baroclinic_gyre.MitgcmBaroclinicGyre
             The test group that this test case belongs to
 
         resolution : str
