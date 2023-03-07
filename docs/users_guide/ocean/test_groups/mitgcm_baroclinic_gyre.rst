@@ -1,7 +1,7 @@
 .. _mitgcm_baroclinic_gyre:
 
 mitgcm_baroclinic_gyre
-==================
+=======================
 
 The ``mitgcm_baroclinic_gyre`` test group implements variants of the
 Baroclinic ocean gyre set-up from the 
@@ -16,6 +16,14 @@ represent an enclosed sector of fluid on a sphere, spanning the tropics to mid-l
 The fluid is :math:`1.8`\ km deep and is forced by a zonal wind
 stress which is constant in time, :math:`\tau_{\lambda}`, varying sinusoidally in the
 north-south direction.
+
+.. figure:: ../images/baroclinic_gyre_config.png
+  :width: 95%
+  :align: center
+  :alt: baroclinic gyre configuration
+  :name: baroclinic_gyre_config
+
+  Schematic of simulation domain and wind-stress forcing function for baroclinic gyre numerical experiment. The domain is enclosed by solid walls. From `MITgcm test case <https://mitgcm.readthedocs.io/en/latest/examples/baroclinic_gyre/baroclinic_gyre.html>`_.
 
 Forcing
 --------------
@@ -34,8 +42,8 @@ The sinusoidal wind-stress variations are defined according to
 
 where :math:`L_{\varphi}` is the lateral domain extent
 (:math:`60^{\circ}`), :math:`\varphi_o` is set to :math:`15^{\circ} \text{N}` and :math:`\tau_0` is :math:`0.1 \text{ N m}^{-2}`.
-:numref:`baroclinic_gyre_config` summarizes the
-configuration simulated. 
+:ref:`mitgcm_baroclinic_gyre.cfg` summarizes the
+configuration options used in this simulation. 
 
 Temperature is restored in the surface layer to a linear profile:
 
@@ -44,14 +52,14 @@ Temperature is restored in the surface layer to a linear profile:
    \theta^* = \frac{\theta_{\rm max} - \theta_{\rm min}}{L_\varphi} (\varphi_{\rm max} - \varphi) + \theta_{\rm min}
    :label: baroc_restore_theta
 
-where the piston velocity :math:`U_{piston}=3.86e-7` (s^{-1})  (equivalent to a relaxation timescale of 30 days) and :math:`\theta_{\rm max}=30^{\circ}` C, :math:`\theta_{\rm min}=0^{\circ}` C.
+where the piston velocity :math:`U_{piston}=3.86e-7 \text{ }  (s^{-1})`  (equivalent to a relaxation timescale of 30 days) and :math:`\theta_{\rm max}=30^{\circ}` C, :math:`\theta_{\rm min}=0^{\circ}` C.
 
 Initial state
 --------------
 
 Initially the fluid is stratified
 with a reference potential temperature profile that varies from (approximately) :math:`\theta=30.7 \text{ } ^{\circ}`\ C
-in the surface layer to :math:`\theta=1.3 \text{ } ^{\circ}`\ C in the bottom layer. The temperature values are from fitting an analytical function to the MITgcm disrete values (originally ranging form 2 to 30 `\text{ } ^{\circ}`\ C. 
+in the surface layer to :math:`\theta=1.3 \text{ } ^{\circ}`\ C in the bottom layer. The temperature values were determined by fitting an analytical function to the MITgcm discrete values (originally ranging from 2 to :math:`30 \text{ } ^{\circ}`\ C. 
 The equation of state used in this experiment is linear:
 
 .. math::
@@ -62,22 +70,13 @@ with :math:`\rho_{0}=999.8\,{\rm kg\,m}^{-3}` and
 :math:`\alpha_{\theta}=2\times10^{-4}\,{\rm K}^{-1}`. The salinity is set to a uniform value of :math:`S=34`\ psu. 
 Given the linear equation of state, in this configuration the model state variable for temperature is
 equivalent to either in-situ temperature, :math:`T`, or potential
-temperature, :math:`\theta`. For consistency with later examples, in
-which the equation of state is non-linear, here we use the variable :math:`\theta` to
+temperature, :math:`\theta`. For simplicity, here we use the variable :math:`\theta` to
 represent temperature.
 
-.. figure:: ../images/baroclinic_gyre_config.png
-  :width: 95%
-  :align: center
-  :alt: baroclinic gyre configuration
-  :name: baroclinic_gyre_config
-
-  Schematic of simulation domain and wind-stress forcing function for baroclinic gyre numerical experiment. The domain is enclosed by solid walls. From `MITgcm test case <https://mitgcm.readthedocs.io/en/latest/examples/baroclinic_gyre/baroclinic_gyre.html>`_.
-
-Validation
+Analysis
 --------------
 
-This test case is meant to be run to quasi-steady state and its mean state compared to the MITgcm test case.
+For scientific validation, this test case is meant to be run to quasi-steady state and its mean state compared to the MITgcm test case and / or theoretical scaling. This is done through an analysis step in the ``long`` case. 
 Examples of qualitative plots include: i) equilibrated SSH contours on top of surface heat fluxes, ii) barotropic streamfunction (compared to MITgcm or a braotropic gyre test case).
 
 Examples of checks against theory include: iii) max of simulated barotropic streamfunction ~ Sverdrup transport, iv) simulated thermocline depth ~ scaling argument for penetration depth (Vallis (2017) or Cushman-Roisin and Beckers (2011).
@@ -102,3 +101,68 @@ and :math:`L_x` and :math:`L_y` are length scales in the
 Plugging in applicable values at :math:`30^{\circ}`\ N,
 we obtain an estimate for :math:`h` of 200 m.
 
+.. _mitgcm_baroclinic_gyre.cfg:
+
+config options
+--------------
+
+All 2 test cases share the same set of config options:
+
+.. code-block:: cfg
+
+    # Options related to the vertical grid
+    [vertical_grid]
+    
+    # the type of vertical grid
+    grid_type = linear_dz
+    
+    # the linear rate of thickness increase for linear_dz
+    linear_dz_rate = 10.
+    
+    # Number of vertical levels
+    vert_levels = 15
+    
+    # Total water column depth
+    bottom_depth = 1800.
+    
+    # The type of vertical coordinate (e.g. z-level, z-star)
+    coord_type = z-star
+    
+    # Whether to use "partial" or "full", or "None" to not alter the topography
+    partial_cell_type = None
+    
+    # The minimum fraction of a layer for partial cells
+    min_pc_fraction = 0.1
+    
+    
+    # config options for MITgcm baroclinic gyre
+    [mitgcm_baroclinic_gyre]
+    # comment
+    lat_min = 15
+    lat_max = 75
+    lon_min = 0
+    lon_max = 60
+    
+    # Maximum zonal wind stress value
+    wind_stress_max = 0.1
+    
+    # Surface temperature restoring
+    temp_min = 0.
+    temp_max = 30.
+    
+    # Restoring piston velocity for surface temperature (s-1)
+    restoring_temp_piston_vel = 3.86e-7
+
+performance
+------------
+
+``ocean/mitgcm_baroclinic_gyre/performance`` is the default version of the
+mitgcm_baroclinic_gyre test case for a short (10-day) test run and validation of
+prognostic variables for regression testing.
+
+long
+--------
+
+``ocean/mitgcm_baroclinic_gyre/long`` is an additional version of the
+mitgcm_baroclinic_gyre test case for a test run to quasi equilibirum (3 years)
+and validation of the mean state against theory and results from other models.

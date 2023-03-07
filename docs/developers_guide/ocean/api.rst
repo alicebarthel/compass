@@ -479,6 +479,27 @@ merry_go_round
    viz.Viz
    viz.Viz.run
 
+
+mitgcm_baroclinic_gyre
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: compass.ocean.tests.mitgcm_baroclinic_gyre
+
+.. autosummary::
+      :toctree: generated/
+
+   MitgcmBaroclinicGyre
+
+   GyreTestCase
+   GyreTestCase.configure
+
+   forward.Forward
+   forward.Forward.run
+
+   initial_state.InitialState
+   initial_state.InitialState.run
+
+
 nonhydro
 ~~~~~~~~
 

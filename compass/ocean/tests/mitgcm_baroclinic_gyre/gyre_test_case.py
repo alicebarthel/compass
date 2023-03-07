@@ -5,6 +5,7 @@ from compass.ocean.tests.mitgcm_baroclinic_gyre.initial_state import (
     InitialState,
 )
 from compass.testcase import TestCase
+from compass.validate import compare_variables
 
 
 class GyreTestCase(TestCase):
@@ -59,3 +60,12 @@ class GyreTestCase(TestCase):
         """
         config = self.config
         config.add_from_package('compass.mesh', 'mesh.cfg')
+
+    def validate(self):
+        """
+        Validate variables against a baseline
+        """
+        compare_variables(test_case=self,
+                          variables=['layerThickness', 'temperature',
+                                     'ssh'],
+                          filename1='forward/output.nc')
