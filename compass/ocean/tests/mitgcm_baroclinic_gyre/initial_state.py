@@ -1,6 +1,5 @@
-import xarray as xr
 import numpy as np
-
+import xarray as xr
 from mpas_tools.io import write_netcdf
 
 from compass.ocean.vertical import init_vertical_coord
@@ -52,9 +51,8 @@ class InitialState(Step):
 
         _write_forcing(config, ds.latCell)
 
-def _write_initial_state(config, dsMesh):
-    section = config['mitgcm_baroclinic_gyre']
 
+def _write_initial_state(config, dsMesh):
     ds = dsMesh.copy()
 
     bottom_depth = config.getfloat('vertical_grid', 'bottom_depth')
@@ -63,11 +61,13 @@ def _write_initial_state(config, dsMesh):
 
     init_vertical_coord(config, ds)
 
-    # setting the initial conditions 
-    temperature = (-11. * np.log(0.0414*
-                 (-1.*ds.zMid + 100.3)) + 48.8)
+    # setting the initial conditions
+    temperature = (-11. * np.log(0.0414 *
+                   (-1. * ds.zMid + 100.3)) + 48.8)
     temperature = temperature.transpose('Time', 'nCells', 'nVertLevels')
-    print(f'bottom T: {temperature[0, 200, -1]} and surface : {temperature[0, 200, 0]}')
+    bottT = temperature[0, 200, -1].values
+    surfT = temperature[0, 200, 0].values
+    print(f'bottom T: {bottT} and surface : {surfT}')
     salinity = 34.0 * xr.ones_like(temperature)
 
     normalVelocity = xr.zeros_like(ds.xEdge)
@@ -76,16 +76,17 @@ def _write_initial_state(config, dsMesh):
     normalVelocity = normalVelocity.expand_dims(dim='Time', axis=0)
 
     ds['temperature'] = temperature
-    ds['salinity'] = salinity 
+    ds['salinity'] = salinity
     ds['normalVelocity'] = normalVelocity
 
-    omega = 2. * np.pi / 86164.   
+    omega = 2. * np.pi / 86164.
     ds['fCell'] = 2. * omega * np.sin(ds.latCell)
-    ds['fEdge'] = 2. * omega * np.sin(ds.latEdge) 
-    ds['fVertex'] =  2. * omega * np.sin(ds.latVertex)
+    ds['fEdge'] = 2. * omega * np.sin(ds.latEdge)
+    ds['fVertex'] = 2. * omega * np.sin(ds.latVertex)
 
     write_netcdf(ds, 'initial_state.nc')
     return ds
+
 
 def _write_forcing(config, lat):
     section = config['mitgcm_baroclinic_gyre']
@@ -97,8 +98,8 @@ def _write_forcing(config, lat):
     restoring_temp_piston_vel = section.getfloat('restoring_temp_piston_vel')
     lat = np.rad2deg(lat)
     # set wind stress
-    windStressZonal = -tauMax * np.cos(2 * np.pi * (lat - latMin) \
-                      / (latMax - latMin))
+    windStressZonal = -tauMax * np.cos(2 * np.pi * (lat - latMin) /
+                                       (latMax - latMin))
 
     windStressZonal = windStressZonal.expand_dims(dim='Time', axis=0)
 
@@ -118,7 +119,6 @@ def _write_forcing(config, lat):
         34.0 * xr.ones_like(temperatureSurfaceRestoringValue)
     salinityPistonVelocity = xr.zeros_like(temperaturePistonVelocity)
 
-
     dsForcing = xr.Dataset()
     dsForcing['windStressZonal'] = windStressZonal
     dsForcing['windStressMeridional'] = windStressMeridional
@@ -129,4 +129,3 @@ def _write_forcing(config, lat):
     dsForcing['salinitySurfaceRestoringValue'] = salinitySurfaceRestoringValue
 
     write_netcdf(dsForcing, 'forcing.nc')
-

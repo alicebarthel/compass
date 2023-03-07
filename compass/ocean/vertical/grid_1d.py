@@ -1,8 +1,9 @@
-import numpy
-from importlib import resources
 import json
-from netCDF4 import Dataset
+from importlib import resources
+
+import numpy
 import numpy as np
+from netCDF4 import Dataset
 from scipy.optimize import root_scalar
 
 
@@ -52,7 +53,7 @@ def generate_1d_grid(config):
             grid_type != 'tanh_dz':
         bottom_depth = section.getfloat('bottom_depth')
         # renormalize to the requested range
-        interfaces = (bottom_depth/interfaces[-1]) * interfaces
+        interfaces = (bottom_depth / interfaces[-1]) * interfaces
 
     return interfaces
 
@@ -128,7 +129,7 @@ def add_1d_grid(config, ds):
 
 def _generate_uniform(vert_levels):
     """ Generate uniform layer interfaces between 0 and 1 """
-    interfaces = numpy.linspace(0., 1., vert_levels+1)
+    interfaces = numpy.linspace(0., 1., vert_levels + 1)
     return interfaces
 
 
@@ -146,7 +147,8 @@ def _read_json(grid_type):
 def _create_linear_dz_grid(num_vert_levels, bottom_depth,
                            linear_dz_rate):
     """
-    Creates the linear vertical grid for MPAS-Ocean and writes it to a NetCDF file
+    Creates the linear vertical grid for MPAS-Ocean and
+    writes it to a NetCDF file
 
     Parameters
     ----------
@@ -166,11 +168,13 @@ def _create_linear_dz_grid(num_vert_levels, bottom_depth,
     """
 
     nz = num_vert_levels
-    layerThickness = [(bottom_depth / nz) - (np.floor(nz/2) - k) * linear_dz_rate for k in np.arange(0, nz)]
-    min_layer_thickness  = layerThickness[0]
+    layerThickness = [(bottom_depth / nz) - (np.floor(nz / 2) - k) *
+                      linear_dz_rate for k in np.arange(0, nz)]
+    min_layer_thickness = layerThickness[0]
     max_layer_thickness = layerThickness[-1]
     print('Linear dz vertical grid')
-    print(f'min layer thickness: {min_layer_thickness}; max layer thickness {max_layer_thickness} in m;')
+    print(f'min layer thickness: {min_layer_thickness}; '
+          f'max layer thickness {max_layer_thickness} in m;')
     interfaces = - np.append([0], np.cumsum(layerThickness))
 
     return interfaces
@@ -179,7 +183,8 @@ def _create_linear_dz_grid(num_vert_levels, bottom_depth,
 def _create_tanh_dz_grid(num_vert_levels, bottom_depth, min_layer_thickness,
                          max_layer_thickness):
     """
-    Creates the tanh vertical grid for MPAS-Ocean and writes it to a NetCDF file
+    Creates the tanh vertical grid for MPAS-Ocean and
+    writes it to a NetCDF file
 
     Parameters
     ----------
@@ -224,7 +229,7 @@ def _create_tanh_dz_grid(num_vert_levels, bottom_depth, min_layer_thickness,
 
 def _tanh_match_bottom(delta, nz, dz1, dz2, bottom_depth):
     """
-    For tanh layer thickness, compute the difference between the 
+    For tanh layer thickness, compute the difference between the
     bottom depth computed with the given
     parameters and the target ``bottom_depth``, used in the root finding
     algorithm to determine which value of ``delta`` to use.
@@ -262,7 +267,8 @@ def _tanh_match_bottom(delta, nz, dz1, dz2, bottom_depth):
 
 def _tanh_cumsum_z(delta, nz, dz1, dz2):
     """
-    Compute tanh layer interface depths and layer thicknesses over ``nz`` layers
+    Compute tanh layer interface depths and layer thicknesses
+    over ``nz`` layers
 
     Parameters
     ----------

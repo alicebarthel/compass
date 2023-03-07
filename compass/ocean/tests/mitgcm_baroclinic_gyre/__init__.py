@@ -1,5 +1,7 @@
+from compass.ocean.tests.mitgcm_baroclinic_gyre.gyre_test_case import (
+    GyreTestCase,
+)
 from compass.testgroup import TestGroup
-from compass.ocean.tests.mitgcm_baroclinic_gyre.gyre_test_case import GyreTestCase
 
 
 class MitgcmBaroclinicGyre(TestGroup):
@@ -15,8 +17,8 @@ class MitgcmBaroclinicGyre(TestGroup):
 
         for resolution in ['80km']:
             self.add_test_case(
-                GyreTestCase(test_group=self, resolution=resolution, long=False))
+                GyreTestCase(test_group=self, resolution=resolution,
+                             long=False))
             self.add_test_case(
-                GyreTestCase(test_group=self, resolution=resolution, long=True))
-
-
+                GyreTestCase(test_group=self, resolution=resolution,
+                             long=True))

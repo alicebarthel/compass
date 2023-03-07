@@ -1,6 +1,5 @@
+import numpy as np
 import xarray as xr
-import numpy as np 
-
 from mpas_tools.io import write_netcdf
 from mpas_tools.mesh.conversion import convert, cull
 

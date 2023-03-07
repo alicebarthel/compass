@@ -1,10 +1,10 @@
+from compass.model import run_model
 from compass.step import Step
-from compass.model import partition, run_model
 
 
 class Forward(Step):
     """
-    A step for performing forward MPAS-Ocean runs as part of 
+    A step for performing forward MPAS-Ocean runs as part of
     the MITgcm baoclinic gyre test cases.
 
     Attributes
@@ -14,7 +14,7 @@ class Forward(Step):
 
     """
     def __init__(self, test_case, resolution, name='forward', subdir=None,
-                  long=False):
+                 long=False):
         """
         Create a new test case
 
@@ -59,18 +59,20 @@ class Forward(Step):
         # make sure output is double precision
         self.add_streams_file('compass.ocean.streams', 'streams.output')
 
-        self.add_namelist_file('compass.ocean.tests.mitgcm_baroclinic_gyre', 'namelist.forward')
+        self.add_namelist_file('compass.ocean.tests.mitgcm_baroclinic_gyre',
+                               'namelist.forward')
         if long:
             output_interval = "0010_00:00:00"
             restart_interval = "0010_00:00:00"
         else:
             output_interval = res_params['run_duration'].replace("'", "")
             restart_interval = "0030_00:00:00"
-        replacements = dict(
-            output_interval=output_interval, restart_interval=restart_interval)
-        self.add_streams_file(package='compass.ocean.tests.mitgcm_baroclinic_gyre',
-                              streams='streams.forward',
-                              template_replacements=replacements)
+        replacements = dict(output_interval=output_interval,
+                            restart_interval=restart_interval)
+        self.add_streams_file(
+            package='compass.ocean.tests.mitgcm_baroclinic_gyre',
+            streams='streams.forward',
+            template_replacements=replacements)
         options = dict()
         for option in ['dt', 'btr_dt', 'mom_del4', 'run_duration']:
             options[f'config_{option}'] = res_params[option]
